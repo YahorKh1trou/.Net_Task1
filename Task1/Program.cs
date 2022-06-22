@@ -11,8 +11,7 @@ namespace Task1
         static void Main(string[] args)
         {
             var lineNumber = 0;
-            using (ApplicationContext db = new ApplicationContext())
-            {
+            DataRepository db = new DataRepository();
                 //читаем эксель
                 using (StreamReader reader = new StreamReader(@"C:\Source\User_1.csv"))
                 {
@@ -24,8 +23,7 @@ namespace Task1
                         {
                             var values = line.Split(',');
                             User user = new User { Date = DateTime.Parse(values[0]), Name = values[1], Lastname = values[2], Patro = values[3], City = values[4], Country = values[5] };
-                            db.Users.Add(user);
-                            db.SaveChanges();
+                            db.AddUser(user);
                         }
                         lineNumber++;
                     }
@@ -37,7 +35,7 @@ namespace Task1
                         case "1":
                             Console.Write("Введите фамилию пользователя либо её часть: ");
                             string? lastname = Console.ReadLine();
-                            var users = db.Users.Where(p => EF.Functions.Like(p.Lastname, $"%{lastname}%"));
+                            var users = db.FindUsers(lastname);
                             // если users что-нибудь содержит, то выводим полученный список совпадений, если нет - то говорим, что ничего не найдено
                             if (users.Any()) 
                             {
@@ -48,7 +46,8 @@ namespace Task1
                             }
                             break;
                         case "2":
-                            var userslist = db.Users.ToList();
+                        //var userslist = db.Users.ToList();
+                            var userslist = db.GetUsers();
                             Console.WriteLine("Список пользователей:");
                             foreach (User u in userslist)
                             {
@@ -56,15 +55,14 @@ namespace Task1
                             }
                             Console.Write("Введите номер записи, которую хотите удалить: ");
                             string? delid = Console.ReadLine();
-                            var intid = Int64.Parse(delid); //приводим прочитанное из консоли значение к типу int
-                            User deluser = db.Users.FirstOrDefault(x => x.Id == intid);
+                            var intid = Int32.Parse(delid); //приводим прочитанное из консоли значение к типу int
+                            User deluser = db.FindUserById(intid);
                             // если есть юзер с указанным id, то удаляем его и выводим получившийся список, если нет, то сообщение об ошибке удаления
                             if (deluser != null)
                             {
-                                db.Users.Remove(deluser);
-                                db.SaveChanges();
+                                db.RemoveUser(deluser);
                                 Console.WriteLine("Запись успешно удалена, ниже показан обновлённый список:");
-                                var userss = db.Users.ToList();
+                                var userss = db.GetUsers();
                                 foreach (User u in userss)
                                 {
                                     Console.WriteLine($"{u.Id} {u.Date} {u.Name} {u.Lastname} {u.Patro} {u.City} {u.Country}");
@@ -80,7 +78,7 @@ namespace Task1
                     Console.WriteLine("Нажмите любую клавишу, чтобы закрыть приложение...");
                     Console.ReadKey();
                 }
-            }
+        //    }
         }
     }
 }
